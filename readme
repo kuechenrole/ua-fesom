@@ -1,0 +1,9 @@
+**************** Starting the Diesel Engine ******************
+
+
+0. Create initial meshi. timms/meshgen/jigsaw/makeJigsawUa creates 2d box of the full MISOMIP domain filled with triangles with 2 km resolution.
+1. One year (e.g. 2021) fesom with ua equilibrium geometry (e.g. from ice0_Tsai) and using analytical initial conditions (manually setting the namelist.config)
+2. One year ua (2021) with melt rates from fesom and initial conditions from equilibrium run (e.g. ive0_Tsai); manually setting the DefineInitialInputs.m
+3. One year fesom (2022) with geometry from Ua (beginning of 2022) and initial conditions from fesom (end of 2021). Manualy adjusting the namelist.config.
+4. One year Ua (2022) with melt rates from fesom (end of 2022) and initial conditions from Ua (beginning of 2022); manually adjusting the DefineInitialInputs.m.
+5. Automated coupling starting with ice2ocean which initiates fesom (2023).
