@@ -2,9 +2,10 @@ function [UserVar,CtrlVar,MeshBoundaryCoordinates]=DefineInitialInputs(UserVar,C
 
 
 %%
-UserVar.MisExperiment='iceOceanI_t';  % This I use in DefineMassBalance
+UserVar.MisExperiment='iceOceanN_t';  % This I use in DefineMassBalance
 UserVar.Outputsdirectory='ResultsFiles'; % This I use in UaOutputs
-UserVar.MassBalanceCase='iceOceanI';
+UserVar.MassBalanceCase='iceOceanN';
+UserVar.CouplingStart=0;
 %%
 
 CtrlVar.SlidingLaw="Tsai" ;  % options:  "W","W-N0","minCW-N0","C","rpCW-N0", and "rCW-N0"  
@@ -13,9 +14,16 @@ CtrlVar.Experiment=['MismipPlus-',UserVar.MisExperiment];
 %
 CtrlVar.TimeDependentRun=1; 
 CtrlVar.TotalNumberOfForwardRunSteps=99999999;
-CtrlVar.TotalTime=1182;
+CtrlVar.TotalTime=1030.30;
 CtrlVar.Restart=1;
-CtrlVar.ResetTime=0;   
+CtrlVar.NameOfRestartFiletoWrite=['Restart',CtrlVar.Experiment,'.mat'];
+if UserVar.CouplingStart;
+    CtrlVar.ResetTime=1;   
+    CtrlVar.NameOfRestartFiletoRead='RestartMismipPlus-spinup_T.mat';
+else
+    CtrlVar.ResetTime=0;   
+    CtrlVar.NameOfRestartFiletoRead=CtrlVar.NameOfRestartFiletoWrite;
+end
 CtrlVar.RestartTime=1000;
 CtrlVar.ResetTimeStep=0;                 % true if time step should be reset to dt given in the Ua2D_InitialUserInputFile
 CtrlVar.InfoLevelNonLinIt=1;  % try setting to 100 for more info and plots on non-linear convergence  
@@ -28,7 +36,7 @@ CtrlVar.NRitmax=500;       % maximum number of NR iteration
 
 %CtrlVar.time=0; 
 
-CtrlVar.DefineOutputsDt=1; % interval between calling UaOutputs. 0 implies call it at each and every run step.
+CtrlVar.DefineOutputsDt=0.10; % interval between calling UaOutputs. 0 implies call it at each and every run step.
                        % setting CtrlVar.DefineOutputsDt=1; causes UaOutputs to be called every 1 years.
                        % This is a more reasonable value once all looks OK.
 
@@ -52,10 +60,7 @@ CtrlVar.PlotXYscale=1000;
 CtrlVar.TriNodes=3;
 
 
-CtrlVar.NameOfRestartFiletoWrite=['Restart',CtrlVar.Experiment,'.mat'];
 
-CtrlVar.NameOfRestartFiletoRead=CtrlVar.NameOfRestartFiletoWrite;
-%CtrlVar.NameOfRestartFiletoRead='RestartMismipPlus-spinup_T.mat';
 
 
 

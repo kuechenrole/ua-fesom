@@ -5,12 +5,14 @@
 #SBATCH -n 1
 #SBATCH -c 1
 #SBATCH --mem=30GB
-#SBATCH -w fat-0004
-#SBATCH -t 01:00:00
+##SBATCH -w fat-0004
+#SBATCH -w prod-0304
+#SBATCH -t 00:30:00
 #SBATCH --qos=normal
 
+module unload matlab
 module load matlab
 
-srun matlab.x -nodisplay -r "Ua; exit;" >> ice1.log 2>>ice1.err
+srun matlab.x -nodisplay -r "Ua; exit;" > ice.log 2>ice.err
 #srun matlab.x -nodisplay -r "run('/home/ollie/cwekerle/matlab/write_mesh_netcdf.m')"
 

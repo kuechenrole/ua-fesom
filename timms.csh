@@ -239,14 +239,14 @@ setenv oldicefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.ice
 setenv newocefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.oce.ini.nc
 setenv newicefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.ice.ini.nc
 
-sed -i "s~oldOceFile=.*~oldOceFile='$oldocefile';~" remap3.m
-sed -i "s~newOceFile=.*~newOceFile='$newocefile';~" remap3.m
-sed -i "s~oldIceFile=.*~oldIceFile='$oldicefile';~" remap3.m
-sed -i "s~newIceFile=.*~newIceFile='$newicefile';~" remap3.m
-sed -i "s~oldMeshPath=.*~oldMeshPath='$oldmeshdir/';~" remap3.m
-sed -i "s~newMeshPath=.*~newMeshPath='$newmeshdir/';~" remap3.m
-#matlab.sh -s -M"-nojvm -r run('remap3.m')"
-matlab.sh -s -S"-wprod-0304" -M"-nojvm -r run('remap3.m')"
+sed -i "s~oldOceFile=.*~oldOceFile='$oldocefile';~" remap.m
+sed -i "s~newOceFile=.*~newOceFile='$newocefile';~" remap.m
+sed -i "s~oldIceFile=.*~oldIceFile='$oldicefile';~" remap.m
+sed -i "s~newIceFile=.*~newIceFile='$newicefile';~" remap.m
+sed -i "s~oldMeshPath=.*~oldMeshPath='$oldmeshdir/';~" remap.m
+sed -i "s~newMeshPath=.*~newMeshPath='$newmeshdir/';~" remap.m
+#matlab.sh -s -M"-nojvm -r run('remap.m')"
+matlab.sh -s -S"-wprod-0304" -M"-nojvm -r run('remap.m')"
 
 
 if ($2 == 'only') then
