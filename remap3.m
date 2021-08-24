@@ -1,27 +1,26 @@
 %define paths
 %dataPath='/work/ollie/orichter/MisomipPlus/fesom_data/';
+oldOceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanN/iceOceanN.1030.oce.nc';
+newOceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanN/iceOceanN.1030.oce.ini.nc';
 
-oldOceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanE/arch/iceOceanE.1000.oce.nc';
-newOceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanE/iceOceanE.1000.oce.nc';
+oldIceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanN/iceOceanN.1030.ice.nc';
+newIceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanN/iceOceanN.1030.ice.ini.nc';
 
-oldIceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanE/arch/iceOceanE.1000.ice.nc';
-newIceFile='/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanE/iceOceanE.1000.ice.nc';
+oldMeshPath='/work/ollie/orichter/MisomipPlus/fesommesh/iceOceanN/1030.10/';
+newMeshPath='/work/ollie/orichter/MisomipPlus/fesommesh/iceOceanN/1030.20/';
 
-oldMeshPath='/work/ollie/orichter/MisomipPlus/fesommesh/iceOceanE/1000/';
-newMeshPath='/work/ollie/orichter/MisomipPlus/fesommesh/iceOceanE/1001/';
+%if isfile(archOceFile)
+%    disp('copying arch files back as they exist already');
+%    copyfile(archOceFile,oldOceFile);%just to back up if you do a restart
+%    copyfile(archIceFile,oldIceFile);
+%end
 
-if isfile(oldOceFile)
-    disp('copying arch files back as they exist already');
-    copyfile(oldOceFile,newOceFile);%just to back up if you do a restart
-    copyfile(oldIceFile,newIceFile);
-end
+%status1 = copyfile(oldOceFile,archOceFile);
+%status2 = copyfile(oldIceFile,archIceFile);
 
-status1 = copyfile(newOceFile, oldOceFile);
-status2 = copyfile(newIceFile,oldIceFile);
-
-if status1==1 & status2==1
-    disp('copying successfull');
-end
+%if status1==1 & status2==1
+%    disp('preserving oce and ice file using year.yearfrac convention successfull');
+%end
 
 
 % Loading old mesh:
@@ -234,6 +233,7 @@ netcdf.putVar(ncid_out,vice_ID,get_data_out(6,idxOld2New));
 netcdf.close(ncid_in);
 netcdf.close(ncid_out);
 
+disp 'remapping done!'
 exit;
 function data_out = get_data_out(var_ind,idxOld2New)
     global ncid_in

@@ -2,18 +2,15 @@ function [UserVar,as,ab]=DefineMassBalance(UserVar,CtrlVar,MUA,time,s,b,h,S,B,rh
 
 as=zeros(MUA.Nnodes,1)+0.3;
 
-%fesomForcingPath = '/work/ollie/orichter/MisomipPlus/fesom_data/RG47911.2029.forcing.diag.nc';
-%fesomNodPath = '/work/ollie/orichter/MisomipPlus/fesom_mesh/030/nod2d.out';
-%disp(["reading data from ",fesom_path]);
-fesomMeltPath= getenv('fesommeltfile');
-fesomCoordPath= getenv('fesomcoordfile');
+fesomMeltPath= '/work/ollie/orichter/MisomipPlus/fesomdata/iceOceanI/iceOceanI.1182.forcing.diag.nc';
+fesomCoordPath= '/work/ollie/orichter/MisomipPlus/fesommesh/iceOceanI/1182/nod2d.out';
 
 rhofw = 1000;
 rho_ice = 917;% already defined by default
 
 
 wnetFes = ncread(fesomMeltPath,'wnet');
-wnetFes = double(mena(wnetFes(:,:),2));
+wnetFes = double(mean(wnetFes(:,:),2));
 
 
 fid=fopen(fesomCoordPath,'r');
@@ -23,17 +20,15 @@ fclose(fid);
 xfes=transpose(nodes(2,:)*111000);
 yfes=transpose(nodes(3,:)*111000);
 
-%Ua_path = '/home/csys/orichter/MismipPlus/ice0_t/ResultsFiles/0010000-Nodes8212-Ele16176-Tri3-kH1000-MismipPlus-ice0_t.mat';
-%load(Ua_path);
 xUa = MUA.coordinates(:,1);
 yUa = MUA.coordinates(:,2);
 
-%wnetUa = griddata(xfes,yfes,wnetFes,xUa,yUa,'nearest');
 interp = scatteredInterpolant(xfes,yfes,wnetFes,'linear','nearest');
 wnetUa = interp(xUa,yUa);
 wnetUa = wnetUa.*365.25*24*3600.*-1;
 wnetUa = wnetUa.*(rhofw/rho_ice);
 
-ab=wnetUa.*(1-GF.node);
+GF=IceSheetIceShelves(CtrlVar,MUA,GF);
+ab=wnetUa.*GF.NodesDownstreamOfGroundingLines;
 
 end

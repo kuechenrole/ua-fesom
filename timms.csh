@@ -2,10 +2,10 @@
 
 #to be run from $homedir
 
-setenv runid iceOceanE
+setenv runid iceOceanN
 setenv finyear 1100
 
-setenv masterdir $HOME/timms_linRemap_adaptTS
+setenv masterdir $HOME/timms/COM
 setenv timmsoutdir $WORK/MisomipPlus/timms/$runid
 
 setenv fesommeshdir $WORK/MisomipPlus/fesommesh/$runid
@@ -67,12 +67,17 @@ echo "$OLDYEAR"
 echo "$NEWTIME"
 echo "$NEWDAY"
 echo "$NEWYEAR"
-
-if ($NEWDAY != 1 || $OLDYEAR == $NEWYEAR || ($OLDDAY != 360 && $OLDDAY != 365)) then
- echo "--------------------------------------------"
- echo "ERROR: invalid clock file - Mr. Timms terminates"
- echo "--------------------------------------------"
-endif
+@ yearfrac = $OLDDAY * 100 / 360
+setenv NEWYEAR $NEWYEAR.`printf "%02d" $yearfrac | tail -c 2`
+@ yearfrac = $yearfrac - 10
+setenv OLDYEAR $OLDYEAR.`printf "%02d" $yearfrac | tail -c 2`
+echo "$OLDYEAR"
+echo "$NEWYEAR"
+#if ($NEWDAY != 1 || $OLDYEAR == $NEWYEAR || ($OLDDAY != 360 && $OLDDAY != 365)) then
+# echo "--------------------------------------------"
+# echo "ERROR: invalid clock file - Mr. Timms terminates"
+# echo "--------------------------------------------"
+#endif
 
 echo $OLDYEAR > $timmsoutdir/$runid.yeartoicemod.dat
 echo $NEWYEAR > $timmsoutdir/$runid.yearfromicemod.dat
@@ -90,13 +95,23 @@ echo "========================"
 echo " run prepare4ua"
 echo "========================"
 
+
 setenv OLDYEAR `cat $timmsoutdir/$runid.yeartoicemod.dat`
 setenv NEWYEAR `cat $timmsoutdir/$runid.yearfromicemod.dat`
+
+echo "Preserving log file"
+mkdir $uadir/arch
+cp $uadir/ice.log $uadir/arch/ice.$OLDYEAR.log
+echo "preserving old restart file"
+set uaid=`grep "UserVar.MisExperiment=" $uadir/DefineInitialInputs.m | cut -d "'" -f2`
+cp $uadir/RestartMismipPlus-$uaid.mat $uadir/arch/RestartMismipPlus-$uaid.$OLDYEAR.mat
+
 echo "using years" $OLDYEAR" and" $NEWYEAR" for current ua step."
 sed -i "s/CtrlVar.TotalTime=.*/CtrlVar.TotalTime=$NEWYEAR;/" $uadir/DefineInitialInputs.m
 #sed -i "s/CtrlVar.RestartTime=.*/CtrlVar.RestartTime=$OLDYEAR;/" $uadir/DefineInitialInputs.m
 
-setenv fesommeltfile $fesomdatadir/$runid.$OLDYEAR.forcing.diag.nc
+
+setenv fesommeltfile $fesomdatadir/$runid.`echo $OLDYEAR | cut -d "." -f1`.forcing.diag.nc
 setenv fesomcoordfile $fesommeshdir/$OLDYEAR/nod2d.out
 echo "using" $fesommeltfile " and" $fesomcoordfile " for current ua melt rates."
 sed -i "s~fesomMeltPath=.*~fesomMeltPath= '$fesommeltfile';~" $uadir/DefineMassBalance.m
@@ -123,11 +138,10 @@ echo "==============="
 echo "now launch Ua"
 echo "==============="
 
-setenv OLDYEAR `cat $timmsoutdir/$runid.yeartoicemod.dat`
-setenv NEWYEAR `cat $timmsoutdir/$runid.yearfromicemod.dat`
+#setenv OLDYEAR `cat $timmsoutdir/$runid.yeartoicemod.dat`
+#setenv NEWYEAR `cat $timmsoutdir/$runid.yearfromicemod.dat`
 
 cd $uadir
-cp ice.log ice.$OLDYEAR.log
 sbatch ua.run
 
 if ($2 == 'only') then
@@ -137,10 +151,12 @@ if ($2 == 'only') then
  exit
 endif
 
-if ($NEWYEAR >= $finyear) then
+if (`echo $NEWYEAR | cut -d "." -f1` >= $finyear) then
  echo "==================================================================================="
- echo "exit after launchua has been completed. Final year ("$finyear") has been reached."
+ echo "backup and exit after launchua has been completed. Final year ("$finyear") has been reached."
  echo "==================================================================================="
+ cd $masterdir
+ ./backup.sh 
  exit
 endif
 
@@ -176,7 +192,7 @@ echo 'call meshgen.m'
 echo "======================"
 setenv yearfromicemod `cat $timmsoutdir/$runid.yearfromicemod.dat`
 setenv newmeshdir $fesommeshdir/$yearfromicemod
-setenv uaresultfile $uadir/ResultsFiles/0${yearfromicemod}00-Nodes*.mat
+setenv uaresultfile $uadir/ResultsFiles/$yearfromicemod-Nodes*.mat
 setenv goodfile $fesommeshdir/meshgen.goodfile.$yearfromicemod
 
 sed -i "s~meshOutPath=.*~meshOutPath='$newmeshdir/';~" meshgen.m
@@ -212,15 +228,16 @@ setenv yearfromicemod `cat $timmsoutdir/$runid.yearfromicemod.dat`
 echo 'yeartoicemod=' $yeartoicemod
 echo 'yearfromicemod=' $yearfromicemod
 
-setenv oldocefile $fesomdatadir/arch/$runid.$yeartoicemod.oce.nc
-setenv oldicefile $fesomdatadir/arch/$runid.$yeartoicemod.ice.nc
-setenv newocefile $fesomdatadir/$runid.$yeartoicemod.oce.nc
-setenv newicefile $fesomdatadir/$runid.$yeartoicemod.ice.nc
-
-mkdir $fesomdatadir/arch
-
 setenv newmeshdir $fesommeshdir/$yearfromicemod
 setenv oldmeshdir $fesommeshdir/$yeartoicemod
+
+mkdir $fesomdatadir/arch
+#setenv archocefile $fesomdatadir/arch/$runid.$yeartoicemod.oce.nc
+#setenv archicefile $fesomdatadir/arch/$runid.$yeartoicemod.ice.nc
+setenv oldocefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.oce.nc
+setenv oldicefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.ice.nc
+setenv newocefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.oce.ini.nc
+setenv newicefile $fesomdatadir/$runid.`echo $yeartoicemod | cut -d "." -f1`.ice.ini.nc
 
 sed -i "s~oldOceFile=.*~oldOceFile='$oldocefile';~" remap3.m
 sed -i "s~newOceFile=.*~newOceFile='$newocefile';~" remap3.m
@@ -246,30 +263,43 @@ echo =============
 setenv yeartoicemod `cat $timmsoutdir/$runid.yeartoicemod.dat`
 setenv yearfromicemod `cat $timmsoutdir/$runid.yearfromicemod.dat`
 setenv CLOCKFILE $runid.clock
-echo 'first check correctness of' $fesomdatadir/$CLOCKFILE
-setenv VAR11 `awk -F";" 'NR == 1 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $1}'`
-setenv VAR12 `awk -F";" 'NR == 1 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $2}'`
+#echo 'first check correctness of' $fesomdatadir/$CLOCKFILE
+#setenv VAR11 `awk -F";" 'NR == 1 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $1}'`
+#setenv VAR12 `awk -F";" 'NR == 1 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $2}'`
 setenv OLDYEAR `awk -F";" 'NR == 1 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $3}'`
-setenv NEWTIME `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $1}'`
-setenv NEWDAY `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $2}'`
-setenv NEWYEAR `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $3}'`
-echo "$VAR11"
-echo "$VAR12"
+#setenv NEWTIME `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $1}'`
+#setenv NEWDAY `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $2}'`
+#setenv NEWYEAR `awk -F";" 'NR == 2 { print $1}' $fesomdatadir/$CLOCKFILE | awk '{print $3}'`
+#echo "$VAR11"
+#echo "$VAR12"
 echo "$OLDYEAR"
-echo "$NEWTIME"
-echo "$NEWDAY"
-echo "$NEWYEAR"
-if ($NEWDAY != 1 || $OLDYEAR == $NEWYEAR || $OLDYEAR != $yeartoicemod || $NEWYEAR != $yearfromicemod) then
- echo "--------------------------------------------"
- echo "ERROR: invalid clock file - Mr. Timms terminates"
- echo "--------------------------------------------"
- exit
-else 
- echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
- echo "$CLOCKFILE is ok: We are GO for FESOM launch sequence."
- echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-endif
-
+#echo "$NEWTIME"
+#echo "$NEWDAY"
+#echo "$NEWYEAR"
+#if ($NEWDAY != 1 || $OLDYEAR == $NEWYEAR || $OLDYEAR != $yeartoicemod || $NEWYEAR != $yearfromicemod) then
+# echo "--------------------------------------------"
+# echo "ERROR: invalid clock file - Mr. Timms terminates"
+# echo "--------------------------------------------"
+# exit
+#else 
+# echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+# echo "$CLOCKFILE is ok: We are GO for FESOM launch sequence."
+# echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+#endif
+echo "archive fesom output using year.yearfrac format ... "
+set year = `echo $yeartoicemod | cut -d "." -f1`
+set yearfrac = `echo $yeartoicemod | cut -d "." -f2`
+set names = ('forcing.diag' 'ice.diag' 'ice.mean' 'mesh.diag' 'oce.diag' 'oce.mean' 'oce' 'ice')
+foreach name ($names)
+   mv $fesomdatadir/$runid.$year.$name.nc $fesomdatadir/arch/$runid.$year.$yearfrac.$name.nc
+   echo "$name is done"
+end
+set names = ('ice.ini' 'oce.ini')
+foreach name ($names)
+   cp $fesomdatadir/$runid.$year.$name.nc $fesomdatadir/arch/$runid.$year.$yearfrac.$name.nc
+   echo "$name is done"
+end
+sleep 5
 setenv newmeshdir $fesommeshdir/$yearfromicemod
 setenv configfile $fesomrundir/namelist.config
 echo 'now modify namelist.config using' $OLDYEAR'(I know, its strange) and' $newmeshdir
@@ -277,6 +307,13 @@ cp $configfile $configfile.$yeartoicemod
 sed -i "s~yearnew=.*~yearnew=$OLDYEAR~" $configfile
 sed -i "s~MeshPath=.*~MeshPath='$newmeshdir/'~" $configfile
 sed -i "s~runid=.*~runid='$runid'~" $configfile
+
+if ($2 == 'only') then
+ echo "==========================================="
+ echo "exit after preparefesom has been completed"
+ echo "==========================================="
+ exit
+endif
 
 
 

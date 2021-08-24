@@ -65,8 +65,9 @@ depth = MismBed(x_out,y_out);
 
 %ISOMIP+ calving criterion: no ice, where ice thickness is less than 100 m
 %(ice draft is less than 90 m); taken out to do to smoothing for sigma;
-%CAUTION: not applicable in coupled simulations!
+%CAUTION: not applicable in coupled simulations! However, fesom doesn't like ice bewteen 0 and half the uppermost layer thickness. Hence, for coupled simulations we set ice that is thinner than 10 m to 11 m. The ice model has to come back with exact zero befor fesom ice gets zero. 
 %shelf(shelf>-90)=0;
+shelf(shelf<0 & shelf>-11)=-11;
 
 
 % now ensure 40m minimum water column thickness
